@@ -5,6 +5,14 @@ Simulates a multi-asset portfolio, prices derivative hedges (Black-Scholes), and
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![NumPy](https://img.shields.io/badge/NumPy-013243?logo=numpy&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?logo=pandas&logoColor=white)
+![SciPy](https://img.shields.io/badge/SciPy-8CAAE6?logo=scipy&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBoost-337AB7)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?logo=plotly&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+
 ## How it works
 
 The core loop: fetch market data, estimate covariance, simulate 10,000 correlated paths (Cholesky GBM with regime-scaled vol), then optimize hedge ratios by minimizing CVaR subject to a cost budget.
@@ -79,10 +87,6 @@ Three XGBoost models, all trained with `TimeSeriesSplit` (5-fold, no look-ahead)
 KMeans (3 clusters) runs on rolling vol, skew, kurtosis, and mean pairwise correlation. The detected regime scales the GBM simulation's volatility parameter.
 
 ~95 features for a 4-asset portfolio: multi-horizon returns (5d to 252d), rolling vol/skew/kurtosis at each window, distance from 52-week high/low, and average pairwise correlation.
-
-## Tech stack
-
-Python 3.12, numpy, pandas, scipy, XGBoost, scikit-learn, yfinance, FastAPI, Plotly.js, pyarrow.
 
 ## Technical details
 
