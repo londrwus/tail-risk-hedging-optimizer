@@ -190,7 +190,7 @@ Features are built per asset and per portfolio, at lookback windows $\tau \in \{
 
 XGBoost hyperparameters: 200 trees, max depth 4, learning rate 0.05, 80% subsample, 80% column sample, $\ell_1 = 0.1$, $\ell_2 = 1.0$. These are conservative settings that avoid overfitting on financial data.
 
-The crash predictor handles class imbalance via $\text{scale\_pos\_weight} = n^- / n^+$. Crashes (>5% drawdown in 21 days) happen roughly 7% of the time, so the model sees about 14x more non-crash samples.
+The crash predictor handles class imbalance via `scale_pos_weight` $= n^{-} / n^{+}$. Crashes (>5% drawdown in 21 days) happen roughly 7% of the time, so the model sees about 14x more non-crash samples.
 
 All validation uses `TimeSeriesSplit` with 5 folds. Each fold trains on everything before the test period. No shuffling, no look-ahead.
 
