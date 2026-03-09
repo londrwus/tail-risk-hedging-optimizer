@@ -1,0 +1,48 @@
+[project]
+name = "tail-risk-hedger"
+version = "1.0.0"
+description = "Portfolio tail risk analysis and hedge optimization tool"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "londrwus"},
+]
+readme = "README.md"
+
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scipy>=1.12",
+    "yfinance>=0.2.36",
+    "plotly>=5.18",
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "pyarrow>=15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.3",
+    "mypy>=1.8",
+]
+
+[project.scripts]
+tail-risk = "main:main"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"

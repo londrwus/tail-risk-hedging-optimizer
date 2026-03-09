@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tail Risk Hedging Optimizer</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Tail Risk Hedging Optimizer</h1>
+        <div id="portfolio-config"></div>
+        <p id="portfolio-summary" class="muted"></p>
+    </header>
+
+    <nav id="tab-nav"></nav>
+
+    <div id="loading" class="spinner-overlay" style="display:none">
+        <div class="spinner"></div>
+    </div>
+
+    <main id="tab-content">
+        <!-- tab 1: portfolio overview -->
+        <section id="tab-portfolio" class="tab-pane">
+            <div class="grid-2">
+                <div class="card" data-faq="fan-chart">
+                    <h3>Monte Carlo Fan Chart <button class="faq-btn" onclick="showFaq('fan-chart')">?</button></h3>
+                    <div id="chart-fan"></div>
+                </div>
+                <div class="card" data-faq="return-dist">
+                    <h3>Return Distribution <button class="faq-btn" onclick="showFaq('return-dist')">?</button></h3>
+                    <div id="chart-dist"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card" data-faq="rolling-vol">
+                    <h3>Rolling Volatility <button class="faq-btn" onclick="showFaq('rolling-vol')">?</button></h3>
+                    <div id="chart-rvol"></div>
+                </div>
+                <div class="card" data-faq="cum-return">
+                    <h3>Historical Cumulative Return <button class="faq-btn" onclick="showFaq('cum-return')">?</button></h3>
+                    <div id="chart-cum"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card" data-faq="risk-attrib">
+                    <h3>CVaR Risk Attribution <button class="faq-btn" onclick="showFaq('risk-attrib')">?</button></h3>
+                    <div id="chart-attrib"></div>
+                </div>
+                <div class="card">
+                    <h3>Portfolio Statistics</h3>
+                    <div id="tbl-stats"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 2: hedge analysis -->
+        <section id="tab-hedge" class="tab-pane" style="display:none">
+            <div class="grid-2">
+                <div class="card" data-faq="payoff">
+                    <h3>Payoff Diagrams <button class="faq-btn" onclick="showFaq('payoff')">?</button></h3>
+                    <div id="chart-payoff"></div>
+                </div>
+                <div class="card" data-faq="hedged-dist">
+                    <h3>Hedged vs Unhedged <button class="faq-btn" onclick="showFaq('hedged-dist')">?</button></h3>
+                    <div id="chart-hedged"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Greeks</h3>
+                    <div id="tbl-greeks"></div>
+                </div>
+                <div class="card">
+                    <h3>Instrument Costs</h3>
+                    <div id="tbl-premiums"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 3: hedge frontier -->
+        <section id="tab-frontier" class="tab-pane" style="display:none">
+            <div class="grid-2-1">
+                <div class="card" data-faq="frontier">
+                    <h3>Hedge Frontier <button class="faq-btn" onclick="showFaq('frontier')">?</button></h3>
+                    <div id="chart-frontier"></div>
+                </div>
+                <div class="card">
+                    <h3>Optimal Hedge Ratios</h3>
+                    <div id="tbl-opt"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 4: stress testing -->
+        <section id="tab-stress" class="tab-pane" style="display:none">
+            <div class="grid-2">
+                <div class="card" data-faq="stress-hist">
+                    <h3>Historical Stress <button class="faq-btn" onclick="showFaq('stress-hist')">?</button></h3>
+                    <div id="chart-stress-hist"></div>
+                </div>
+                <div class="card" data-faq="stress-hypo">
+                    <h3>Hypothetical Scenarios <button class="faq-btn" onclick="showFaq('stress-hypo')">?</button></h3>
+                    <div id="chart-stress-hypo"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Scenario Detail</h3>
+                    <div id="tbl-stress-detail"></div>
+                </div>
+                <div class="card">
+                    <h3>Correlation: Normal vs Stress</h3>
+                    <div id="chart-corr-normal"></div>
+                    <div id="chart-corr-stress"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 5: predictions -->
+        <section id="tab-predictions" class="tab-pane" style="display:none">
+            <div class="grid-3">
+                <div class="card">
+                    <label class="muted">Ticker</label>
+                    <select id="pred-ticker"></select>
+                </div>
+                <div class="card">
+                    <label class="muted">Timeframe</label>
+                    <select id="pred-timeframe"></select>
+                </div>
+                <div class="card">
+                    <label class="muted">Simulations</label>
+                    <select id="pred-nsims">
+                        <option value="1000">1,000 (fast)</option>
+                        <option value="5000" selected>5,000</option>
+                        <option value="10000">10,000 (precise)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="pred-current-info" class="card info-bar"></div>
+            <div class="card" data-faq="predictions">
+                <h3>Price Prediction <button class="faq-btn" onclick="showFaq('predictions')">?</button></h3>
+                <div id="chart-pred-fan"></div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Terminal Distribution</h3>
+                    <div id="chart-pred-terminal"></div>
+                </div>
+                <div class="card">
+                    <h3>Stress Scenario (2x Vol)</h3>
+                    <div id="chart-pred-stress"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Prediction & Risk Summary</h3>
+                    <div id="tbl-pred-stats"></div>
+                </div>
+                <div class="card">
+                    <h3>Price Levels</h3>
+                    <div id="tbl-pred-levels"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Risk Flags</h3>
+                    <ul id="pred-risk-flags"></ul>
+                </div>
+                <div class="card">
+                    <h3>US Treasury Yields</h3>
+                    <div id="tbl-rates"></div>
+                    <div id="chart-rates"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 6: factors -->
+        <section id="tab-factors" class="tab-pane" style="display:none">
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Momentum Z-Scores (AQR-style)</h3>
+                    <div id="chart-momentum"></div>
+                </div>
+                <div class="card">
+                    <h3>Tail Dependency</h3>
+                    <div id="chart-tail"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Rolling Correlation</h3>
+                    <div id="chart-rcorr"></div>
+                </div>
+                <div class="card">
+                    <h3>Drawdown Analysis</h3>
+                    <div id="chart-dd"></div>
+                    <div id="tbl-dd"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 7: risk parity -->
+        <section id="tab-riskparity" class="tab-pane" style="display:none">
+            <div class="grid-2">
+                <div class="card" data-faq="risk-parity">
+                    <h3>Risk Parity vs Current <button class="faq-btn" onclick="showFaq('risk-parity')">?</button></h3>
+                    <div id="chart-rp-weights"></div>
+                </div>
+                <div class="card">
+                    <h3>Stats Comparison</h3>
+                    <div id="tbl-rp-comp"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Cumulative Return Comparison</h3>
+                <div id="chart-rp-cum"></div>
+            </div>
+        </section>
+
+        <!-- tab 8: calibration -->
+        <section id="tab-calibration" class="tab-pane" style="display:none">
+            <div class="grid-2-1">
+                <div class="card" data-faq="calibration">
+                    <h3>Optimal Weights <button class="faq-btn" onclick="showFaq('calibration')">?</button></h3>
+                    <div id="chart-calib-weights"></div>
+                </div>
+                <div class="card">
+                    <h3>Strategy Summary</h3>
+                    <div id="tbl-calib-strat"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card" data-faq="eff-frontier">
+                    <h3>Efficient Frontier <button class="faq-btn" onclick="showFaq('eff-frontier')">?</button></h3>
+                    <div id="chart-eff-frontier"></div>
+                </div>
+                <div class="card" data-faq="mc-strategies">
+                    <h3>MC Strategy Comparison <button class="faq-btn" onclick="showFaq('mc-strategies')">?</button></h3>
+                    <div id="chart-calib-mc"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>MC Risk Comparison</h3>
+                    <div id="tbl-calib-mc"></div>
+                </div>
+                <div class="card">
+                    <h3>Strategy Detail</h3>
+                    <div id="tbl-calib-detail"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 9: entry timing -->
+        <section id="tab-entry" class="tab-pane" style="display:none">
+            <div class="grid-2-1">
+                <div class="card" data-faq="entry-timing">
+                    <h3>Entry Timing Verdict <button class="faq-btn" onclick="showFaq('entry-timing')">?</button></h3>
+                    <div id="entry-verdict"></div>
+                </div>
+                <div class="card" data-faq="dip-probs">
+                    <h3>Dip Probabilities <button class="faq-btn" onclick="showFaq('dip-probs')">?</button></h3>
+                    <div id="chart-dip-probs"></div>
+                </div>
+            </div>
+            <div class="grid-2-1">
+                <div class="card" data-faq="dca-comparison">
+                    <h3>Lump Sum vs DCA <button class="faq-btn" onclick="showFaq('dca-comparison')">?</button></h3>
+                    <div id="chart-dca"></div>
+                </div>
+                <div class="card">
+                    <h3>Strategy Comparison</h3>
+                    <div id="tbl-dca"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Price-Level Buy Plan</h3>
+                    <div id="tbl-levels"></div>
+                </div>
+                <div class="card">
+                    <h3>DCA Schedule</h3>
+                    <div id="chart-dca-sched"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- tab 10: ML models -->
+        <section id="tab-ml" class="tab-pane" style="display:none">
+            <div id="ml-summary-bar" class="card info-bar"></div>
+            <div class="grid-2">
+                <div class="card" data-faq="ml-regime">
+                    <h3>KMeans Regime Detection <button class="faq-btn" onclick="showFaq('ml-regime')">?</button></h3>
+                    <div id="chart-ml-regime"></div>
+                    <div id="tbl-ml-regime"></div>
+                </div>
+                <div class="card" data-faq="ml-crash">
+                    <h3>Crash Probability (XGBoost) <button class="faq-btn" onclick="showFaq('ml-crash')">?</button></h3>
+                    <div id="chart-ml-crash"></div>
+                    <div id="tbl-ml-crash"></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card" data-faq="ml-return">
+                    <h3>Return Predictor (XGBoost) <button class="faq-btn" onclick="showFaq('ml-return')">?</button></h3>
+                    <div id="chart-ml-ret-imp"></div>
+                    <div id="tbl-ml-ret"></div>
+                </div>
+                <div class="card" data-faq="ml-vol">
+                    <h3>Volatility Forecaster (XGBoost) <button class="faq-btn" onclick="showFaq('ml-vol')">?</button></h3>
+                    <div id="chart-ml-vol-imp"></div>
+                    <div id="tbl-ml-vol"></div>
+                </div>
+            </div>
+            <div class="card" data-faq="ml-cv">
+                <h3>Cross-Validation Performance <button class="faq-btn" onclick="showFaq('ml-cv')">?</button></h3>
+                <div id="chart-ml-cv"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FAQ modal -->
+    <div id="faq-overlay" class="modal-overlay" style="display:none" onclick="closeFaq()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 id="faq-title"></h3>
+            <p id="faq-body"></p>
+            <button onclick="closeFaq()">Close</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
